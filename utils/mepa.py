@@ -7,8 +7,13 @@ from dataclasses import dataclass
 class Mepa:
     file: Optional[str] = None
     file_size: Optional[int] = None
+
     buffer: Optional[str] = None
-    lines: Optional[int] = None
+    buffer_size: Optional[int] = None
+
+    file_lines: Optional[int] = None
+    buffer_lines: Optional[int] = None
+    
     runable: Optional[bool] = None
 
     # TODO Change the logic of Mepa.file and Mepa.buffer
@@ -25,25 +30,32 @@ class Mepa:
             if file is not None:
                 path = path_root / file
                 self.file = path
+                buffer_path = path_root / 'buffer.mepa'
+                self.buffer = buffer_path
             # if not file.endswith('mepa'): TODO CREATE AN EXCEPTION
                 print("Arquivo existente!")
-                with open(path, 'r') as archive:
-                    self.buffer = archive.read() # Store each command in the buffer of class
-                    archive.seek(0,0) # Reset the pointer
-                    self.lines = len(archive.readlines()) # Returning the total of lines
+                with open(path, 'r+') as archive:
+                    lines = archive.readlines()
+                    self.lines = len(lines) # Returning the total of lines
                     self.file_size = archive.tell() # Getting the size of archive
+
+                    with open(buffer_path, 'w+') as buffer:
+                        buffer.writelines(lines)
+                        self.buffer_lines = self.lines
+                        self.buffer_size = self.file_size
+                    
                 print("Arquivo carregado com sucesso!")
             else:
                 print("Erro: O arquivo não existe.")
 
     def LIST(self):
 
-        if self.file:
+        if self.buffer:
 
-            number_loop = math.ceil(self.lines / 20)
+            number_loop = math.ceil(self.buffer_lines / 20)
             i = 0
 
-            with open(str(self.file), 'r') as file:
+            with open(str(self.buffer), 'r') as file:
                 lines = file.readlines()
 
             for i in range(number_loop):
@@ -59,7 +71,7 @@ class Mepa:
             print('Leia um arquivo existente!')
 
     def RUN(self):
-        if self.file:
+        if self.buffer:
             print("Ativo!") # Mock print
             self.runable = True
         else: # TODO Create an Exception
@@ -68,7 +80,7 @@ class Mepa:
     # TODO Improve the Logic
     def INS(self, line: int = None, instruction: str = None):
         if self.file:
-            with open(str(self.file), 'r+') as file:
+            with open(str(self.buffer), 'r+') as file:
                 lines = file.readlines()
 
                 if line is None or instruction is None:
@@ -105,10 +117,11 @@ class Mepa:
 ###TESTE###
 a = Mepa()
 a.LOAD('ex1.mepa', instruction="READ")
+# print(a)
 # a.LIST()
 # a.RUN()
 a.INS()
-# print(a.buffer,'\n')
+print(a.buffer,'\n')
 # with open(a.file) as archive:
 #     print(archive.read())
 # print(a)
