@@ -70,6 +70,8 @@ class Mepa:
         else: # TODO Create an Exception
             print('Leia um arquivo existente!')
 
+
+    #TODO MUDAR A LÒGICA AQUI, VERIFICA SE ESTUDO ESTÁ OK {Gramaticas e etc}
     def RUN(self):
         if self.buffer:
             print("Ativo!") # Mock print
@@ -82,6 +84,7 @@ class Mepa:
         if self.file:
             with open(str(self.buffer), 'r+') as file:
                 lines = file.readlines()
+                file.seek(0) # Reset the pointer (dodging for copies)
 
                 if line is None or instruction is None:
                     input_data = input("Insere a linha e a instrução desejada (Ex: 1, CRCT 5): ")
@@ -95,23 +98,126 @@ class Mepa:
                     lines[line - 1] = instruction.upper() + "\n"
                     print("Linha atualizada!")
                 else:
-                    lines.append("\n" + instruction.upper() + "\n")
+                    lines.append('\n' + instruction.upper())
                     print("Linha adicionada!")
 
-                self.buffer = ''.join(lines)
+                # self.buffer = ''.join(lines)
+                file.writelines(lines)
 
         else:  # TODO Create an Exception
             print("Leia um arquivo existente!")
 
 
-    def DEL(start:int, end:int = None):...
-    def SAVE(): ...
+    def DEL(self, start:int, end:int = None):
+        if end:
+            if self.file:
+                with open(str(self.buffer), 'r+') as buffer:
+                    lines = buffer.readlines()
+                    buffer.seek(0)
+                    if start > 0 and start <= len(lines) and end > start  and end <= len(lines):
+                        del lines[start-1:end]
+                        lines[-1] = lines[-1].replace('\n', '')
+                        buffer.writelines(lines)
+                        buffer.truncate()
+                        print(f'Linhas <{start}, {end}> Removidas Com Sucesso!')
+                    else:
+                        print("Linha Inexistente")
+                        return
+            else:
+                # TODO EXCEPTION
+                ...
+
+        else:
+            if self.file:
+                with open(str(self.buffer), 'r+') as buffer:
+                    lines = buffer.readlines()
+                    buffer.seek(0)
+                    if start > 0 and start <= len(lines):
+                        del lines[start - 1]
+                        buffer.writelines(lines)
+                        print(f'Linha <{start}> Removida Com Sucesso!')
+                    else:
+                        print("Linha Inexistente")
+                        return
+            else:
+                ... # TODO FAZER UM EXCEPTION
+
+    def SAVE(self):
+        if self.file:
+            with open(str(self.buffer), 'r') as buffer:
+                lines = buffer.readlines()
+                with open(str(self.file), 'w') as file:
+                    file.writelines(lines)
+                    print('Arquivo Salvo!')
+        else:
+            #TODO Exception
+            ...
 ############################ DEBUG SECTION ###############################
-    def DEBUG(): ...
-    def NEXT(): ...
-    def STOP(): ...
-    def STACK(): ...
-    def EXIT(): ...
+    def DEBUG(self):
+        global buffer
+        global stack
+        global index
+        global p
+        stack = []
+
+        with open(str(self.buffer), 'r') as buffer:
+            index = buffer.readline()
+            print(f"Iniciando a Depuração:\n\t{index}")
+            while buffer.readable():
+                match input("Insere um Comando: "):
+                    case 'next':
+                        self.NEXT()
+                        if index == "PARA":
+                            print("Finalizando o Debug")
+                            return
+                    case 'stack':
+                        self.STACK()
+                    case _:
+                        print("Finalizando Debug")
+                        return
+                
+
+    # TODO Averiguar sobre o CRVL; CONJ; DISJ; INVR
+    def NEXT(self):
+        global stack
+        global index
+        global p
+        p_condition = False
+        index = buffer.readline()
+        if index.__contains__('amem'.upper()):
+            for i in range(int(index.split()[-1])):
+                stack.append(0)
+            # print(stack)
+        elif index.__contains__('crct'.upper()):
+            val = int(index.split()[-1])
+            stack.append(val)
+        elif index.__contains__('crvl'.upper()):
+            val_index = int(index.split()[-1])
+            stack.append(stack.index(val_index))
+        elif index.__contains__('armz'.upper()):
+            mem_index = int(index.split()[-1])
+            stack[mem_index] = stack[-1]
+            stack.pop()
+        elif index == "SOMA":
+            stack[-2] = stack[-2] + stack[-1]
+            stack.pop()
+        elif index == "MULT":
+            stack[-2] = stack[-2] * stack[-1]
+            stack.pop()
+        elif index == "CMEG":
+            if stack[-2] <= stack[-1]:...
+
+
+        print("\t",index)
+    
+        
+
+    def STOP(self): ...
+    def STACK(self):
+        global stack
+        for i,j in enumerate(stack):
+            print(f'{i}: {j}')
+    def EXIT(self): ...
             
 
 ###TESTE###
@@ -120,8 +226,8 @@ a.LOAD('ex1.mepa', instruction="READ")
 # print(a)
 # a.LIST()
 # a.RUN()
-a.INS()
-print(a.buffer,'\n')
-# with open(a.file) as archive:
-#     print(archive.read())
-# print(a)
+# a.INS()
+# a.DEL(7)
+# a.INS()
+# a.SAVE()
+a.DEBUG()
