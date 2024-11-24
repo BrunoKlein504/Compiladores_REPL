@@ -2,18 +2,15 @@ from pathlib import Path
 from typing import Optional
 import math
 from dataclasses import dataclass
+from functions import reader, labels_index
+from time import sleep
 
 @dataclass
 class Mepa:
     file: Optional[str] = None
-    file_size: Optional[int] = None
-
     buffer: Optional[str] = None
-    buffer_size: Optional[int] = None
-
-    file_lines: Optional[int] = None
-    buffer_lines: Optional[int] = None
     
+    file_lines: dict[int:str] = None
     runable: Optional[bool] = None
 
     # TODO Change the logic of Mepa.file and Mepa.buffer
@@ -36,14 +33,10 @@ class Mepa:
                 print("Arquivo existente!")
                 with open(path, 'r+') as archive:
                     lines = archive.readlines()
-                    self.lines = len(lines) # Returning the total of lines
-                    self.file_size = archive.tell() # Getting the size of archive
+                    self.file_lines = dict(enumerate([x.replace("\n","") for x in lines]))
 
                     with open(buffer_path, 'w+') as buffer:
                         buffer.writelines(lines)
-                        self.buffer_lines = self.lines
-                        self.buffer_size = self.file_size
-                    
                 print("Arquivo carregado com sucesso!")
             else:
                 print("Erro: O arquivo não existe.")
@@ -153,21 +146,46 @@ class Mepa:
             #TODO Exception
             ...
 ############################ DEBUG SECTION ###############################
-    def DEBUG(self):
-        global buffer
-        global stack
-        global index
-        global p
-        stack = []
+    # def DEBUG(self):
+    #     global buffer
+    #     global stack
+    #     global index
+    #     global p
+    #     stack = []
 
-        with open(str(self.buffer), 'r') as buffer:
-            index = buffer.readline()
-            print(f"Iniciando a Depuração:\n\t{index}")
-            while buffer.readable():
-                match input("Insere um Comando: "):
+    #     with open(self.file, 'r') as buffer: # TODO MUDAR AS VARS
+    #         index = buffer.readlines()
+    #         print(f"Iniciando a Depuração:\n\t{index}")
+    #         while buffer.readable():
+    #             match input("Insere um Comando: "):
+    #                 case 'next':
+    #                     self.NEXT()
+    #                     if index == "PARA":
+    #                         print("Finalizando o Debug")
+    #                         return
+    #                 case 'stack':
+    #                     self.STACK()
+    #                 case _:
+    #                     print("Finalizando Debug")
+    #                     return
+                    
+    def DEBUG(self):
+            global buffer
+            global stack
+            global index
+            global p
+            stack = []
+            index = 0
+
+            print(f"Iniciando a Depuração:\n\t{self.file_lines[index]}")
+
+            while True:
+                # match input("Insere um Comando: "):
+                match "next":
                     case 'next':
                         self.NEXT()
-                        if index == "PARA":
+                        sleep(0.5)
+                        if self.file_lines[index] == "PARA":
                             print("Finalizando o Debug")
                             return
                     case 'stack':
@@ -175,42 +193,103 @@ class Mepa:
                     case _:
                         print("Finalizando Debug")
                         return
-                
+            
 
     # TODO Averiguar sobre o CRVL; CONJ; DISJ; INVR
+    # def NEXT(self):
+    #     global stack
+    #     global index
+    #     global p
+    #     # labels = labels_index(reader(self.buffer))
+    #     # print(labels)
+    #     index = buffer.readline()
+    #     if index.__contains__('amem'.upper()):
+    #         for i in range(int(index.split()[-1])):
+    #             stack.append(0)
+    #         # print(stack)
+    #     elif index.__contains__('crct'.upper()):
+    #         val = int(index.split()[-1])
+    #         stack.append(val)
+    #     elif index.__contains__('crvl'.upper()):
+    #         val_index = int(index.split()[-1])
+    #         stack.append(stack.index(val_index))
+    #     elif index.__contains__('armz'.upper()):
+    #         mem_index = int(index.split()[-1])
+    #         stack[mem_index] = stack[-1]
+    #         stack.pop()
+    #     elif index == "SOMA":
+    #         stack[-2] = stack[-2] + stack[-1]
+    #         stack.pop()
+    #     elif index == "MULT":
+    #         stack[-2] = stack[-2] * stack[-1]
+    #         stack.pop()
+    #     elif index == "CMEG":
+    #         if stack[-2] <= stack[-1]:
+    #             p = True
+    #         else:
+    #             p = False
+    #         stack
+
+
+    #     print("\t",index)
+
     def NEXT(self):
         global stack
         global index
         global p
-        p_condition = False
-        index = buffer.readline()
-        if index.__contains__('amem'.upper()):
-            for i in range(int(index.split()[-1])):
+        labels = labels_index(reader(self.buffer))
+        # print(labels)
+        # print(self.file_lines)
+        index += 1
+        if self.file_lines[index].__contains__('amem'.upper()):
+            for i in range(int(self.file_lines[index].split()[-1])):
                 stack.append(0)
             # print(stack)
-        elif index.__contains__('crct'.upper()):
-            val = int(index.split()[-1])
+        elif self.file_lines[index].__contains__('crct'.upper()):
+            val = int(self.file_lines[index].split()[-1])
             stack.append(val)
-        elif index.__contains__('crvl'.upper()):
-            val_index = int(index.split()[-1])
-            stack.append(stack.index(val_index))
-        elif index.__contains__('armz'.upper()):
-            mem_index = int(index.split()[-1])
+        elif self.file_lines[index].__contains__('crvl'.upper()):
+            val_index = int(self.file_lines[index].split()[-1])
+            stack.append(stack[val_index])
+        elif self.file_lines[index].__contains__('armz'.upper()):
+            mem_index = int(self.file_lines[index].split()[-1])
             stack[mem_index] = stack[-1]
             stack.pop()
-        elif index == "SOMA":
+        elif self.file_lines[index] == "SOMA":
             stack[-2] = stack[-2] + stack[-1]
             stack.pop()
-        elif index == "MULT":
+        elif self.file_lines[index] == "MULT":
             stack[-2] = stack[-2] * stack[-1]
             stack.pop()
-        elif index == "CMEG":
-            if stack[-2] <= stack[-1]:...
+        elif self.file_lines[index] == "CMEG":
+            if stack[-2] <= stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
 
-
-        print("\t",index)
-    
+        elif self.file_lines[index].startswith("DVSF"):
+            label = self.file_lines[index].split()[1]
+            if not p:
+                index = self.jump_to_index(label, index, labels)
         
+        elif self.file_lines[index].startswith("DSVS"):
+            label = self.file_lines[index].split()[1]
+            index = self.jump_to_index(label, index, labels)
+
+
+
+        print("\t",self.file_lines[index], '\n\t',stack)
+
+    #TODO CRIAR EXCEPTION
+    def jump_to_index(self, label:str, index: int, labels:dict[str:int]) -> int:
+        for key, item in labels.items():
+            if label == key:
+                index = item
+        return index
 
     def STOP(self): ...
     def STACK(self):
@@ -223,6 +302,7 @@ class Mepa:
 ###TESTE###
 a = Mepa()
 a.LOAD('ex1.mepa', instruction="READ")
+# print(a.file_lines)
 # print(a)
 # a.LIST()
 # a.RUN()
