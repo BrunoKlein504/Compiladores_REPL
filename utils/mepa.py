@@ -65,6 +65,7 @@ class Mepa:
 
 
     #TODO MUDAR A LÒGICA AQUI, VERIFICA SE ESTUDO ESTÁ OK {Gramaticas e etc}
+    # TODO COPIAR A LÓGICA DO DEBUG
     def RUN(self):
         if self.buffer:
             print("Ativo!") # Mock print
@@ -170,10 +171,9 @@ class Mepa:
     #                     return
                     
     def DEBUG(self):
-            global buffer
-            global stack
-            global index
-            global p
+            # global buffer
+            global stack, index, p
+
             stack = []
             index = 0
 
@@ -234,10 +234,9 @@ class Mepa:
     #     print("\t",index)
 
     def NEXT(self):
-        global stack
-        global index
-        global p
-        labels = labels_index(reader(self.buffer))
+        global stack, index, p
+
+        labels = labels_index(reader(self.file))
         # print(labels)
         # print(self.file_lines)
         index += 1
@@ -245,24 +244,115 @@ class Mepa:
             for i in range(int(self.file_lines[index].split()[-1])):
                 stack.append(0)
             # print(stack)
+        if self.file_lines[index].__contains__('dmem'.upper()):
+            dmem_range = int(self.file_lines[index].split()[-1])
+            for i in range(dmem_range):
+                stack.pop()
+
         elif self.file_lines[index].__contains__('crct'.upper()):
             val = int(self.file_lines[index].split()[-1])
             stack.append(val)
+
         elif self.file_lines[index].__contains__('crvl'.upper()):
             val_index = int(self.file_lines[index].split()[-1])
             stack.append(stack[val_index])
+
         elif self.file_lines[index].__contains__('armz'.upper()):
             mem_index = int(self.file_lines[index].split()[-1])
             stack[mem_index] = stack[-1]
             stack.pop()
+
         elif self.file_lines[index] == "SOMA":
             stack[-2] = stack[-2] + stack[-1]
             stack.pop()
+
         elif self.file_lines[index] == "MULT":
             stack[-2] = stack[-2] * stack[-1]
             stack.pop()
+
+        elif self.file_lines[index] == "DIVI":
+            stack[-2] = stack[-2] / stack[-1]
+            stack.pop()
+
+        elif self.file_lines[index] == "SUBT":
+            stack[-2] = stack[-2] - stack[-1]
+            stack.pop()
+        
+        elif self.file_lines[index] == "INVR":
+            stack[-1] = -stack[-1]
+        
+        elif self.file_lines[index] ==  "CONJ":
+            if stack[-2] and stack[-1]:
+                stack[-2] =  1 # True
+            else:
+                stack[-2] = 0 # False
+            stack.pop()
+
+        elif self.file_lines[index] ==  "DISJ":
+            if stack[-2] or stack[-1]:
+                stack[-2] =  1 # True
+            else:
+                stack[-2] = 0 # False
+            stack.pop()
+
+        # Less Than (<)
+        elif self.file_lines[index] == "CMME":
+            if stack[-2] < stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
+
+        # Greater Than (>)
+        elif self.file_lines[index] == "CMMA":
+            if stack[-2] > stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
+
+        # Equal (=)
+        elif self.file_lines[index] == "CMIG":
+            if stack[-2] == stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
+
+        # Different (<>)
+        elif self.file_lines[index] == "CMDG":
+            if stack[-2] != stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
+        
+        # Less Than or Equal (<=)
         elif self.file_lines[index] == "CMEG":
             if stack[-2] <= stack[-1]:
+                stack.pop()
+                stack.pop()
+                p = True
+            else:
+                stack.pop()
+                stack.pop()
+                p = False
+
+        # Greater Than or Equal (>=)
+        elif self.file_lines[index] == "CMAG":
+            if stack[-2] >= stack[-1]:
                 stack.pop()
                 stack.pop()
                 p = True
@@ -279,7 +369,10 @@ class Mepa:
         elif self.file_lines[index].startswith("DSVS"):
             label = self.file_lines[index].split()[1]
             index = self.jump_to_index(label, index, labels)
-
+        
+        elif self.file_lines[index].startswith("IMPR"):
+            print(f"\t{stack[-1]}")
+            stack.pop()
 
 
         print("\t",self.file_lines[index], '\n\t',stack)
@@ -291,11 +384,15 @@ class Mepa:
                 index = item
         return index
 
-    def STOP(self): ...
+    def STOP(self):
+        print("Depuração Encerrada!")
+
     def STACK(self):
         global stack
         for i,j in enumerate(stack):
             print(f'{i}: {j}')
+
+    # TODO FAZER AO LADO DE LOAD
     def EXIT(self): ...
             
 
