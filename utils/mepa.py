@@ -2,10 +2,9 @@ from pathlib import Path
 from typing import Optional
 import math
 from dataclasses import dataclass
-from functions import reader, labels_index, verify_indentifier, verify_stack_address
+from .functions import reader, labels_index, verify_indentifier, verify_stack_address
 from time import sleep
-from exceptions_files.mepa_exceptions import MepaException
-
+from .mepa_exceptions import MepaException
 @dataclass
 class Mepa:
     file: Optional[str] = None
@@ -27,7 +26,9 @@ class Mepa:
             if input_value.lower()[0] == 's':
                 self.SAVE()
 
-        # if not file.endswith('mepa'): TODO CREATE AN EXCEPTION
+        if not file.endswith('.mepa'):
+            raise MepaException("Arquivo Precisa Ser da Extensão <.mepa>")
+
         if file is not None:
             path = path_root / file
             self.file = path
@@ -51,18 +52,19 @@ class Mepa:
 
         if self.buffer:
 
-            number_loop = math.ceil(self.buffer_lines / 20)
-            i = 0
 
             with open(str(self.buffer), 'r') as file:
                 lines = file.readlines()
+
+            number_loop = math.ceil(len(lines) / 20)
+            i = 0
 
             for i in range(number_loop):
                 start = i * 20
                 end = start + 20
 
                 for j in range(start, min(end, len(lines))):
-                    print(lines[j].strip())
+                    print(f'{j + 1} {lines[j].strip()}')
 
                 print(input("\nAperte Enter para continuar..."))
 
@@ -233,7 +235,8 @@ class Mepa:
         if self.file:
             with open(str(self.buffer), 'r+') as file:
                 lines = file.readlines()
-                file.seek(0) # Reset the pointer (dodging for copies)
+                file.seek(0,0) # Reset the pointer
+                file.truncate()
 
                 if line is None or instruction is None:
                     input_data = input("Insere a linha e a instrução desejada (Ex: 1, CRCT 5): ")
@@ -307,8 +310,8 @@ class Mepa:
                     file.writelines(lines)
                     print('Arquivo Salvo!')
 
-            # Deleting the buffer
-            Path(self.buffer).unlink()
+            # # Deleting the buffer
+            # Path(self.buffer).unlink()
         else:
             raise MepaException("Não Há arquivos para salvar!")
 
@@ -322,10 +325,13 @@ class Mepa:
             index = 0
             p = False
 
-            print(f"Iniciando a Depuração:\n\t{self.file_lines[index]}")
+            if not self.file:
+                raise MepaException("Leia um Arquivo!")
+
+            print(f"Iniciando a Depuração:\n{self.file_lines[index]:*^30}")
 
             while True:
-                match input("Insere um Comando: ").upper():
+                match input("Insere um Comando:\n(Debugging Mode)\n\t>").upper():
                 # match "NEXT":
                     case 'NEXT':
                         self.NEXT()
@@ -488,7 +494,7 @@ class Mepa:
             stack.pop()
 
 
-        print("\t",self.file_lines[index])
+        print(f'{self.file_lines[index]:*^30}')
 
     def jump_to_index(self, label:str, index: int, labels:dict[str:int]) -> int:
         for key, item in labels.items():
@@ -514,17 +520,19 @@ class Mepa:
                 with open(self.file, "r+") as archive:
                     archive_lines = archive.readlines()
                     if archive_lines != buffer_lines:
-                        print(input_value:=input("Há Modificações Não Salvas. Deseja Salvar? (sim/não)\n\t")) # Walrus Operator
+                        input_value = input("Há Modificações Não Salvas. Deseja Salvar? (sim/não)\n\t")
             if input_value.lower()[0] == 's':
                 self.SAVE()
+                    # Deleting the buffer
+            Path(self.buffer).unlink()
         print("Finalizando o Programa.")
             
 
 # ###TESTE###
 # try:
-#     a = Mepa()
-#     a.LOAD('ex1.mepa')
-#     # print(a.file_lines)
+# a = Mepa()
+# a.LOAD('ex1 copy.mep')
+    # print(a.file_lines)
 #     # print(a)
 #     # a.LIST()
 #     a.RUN()

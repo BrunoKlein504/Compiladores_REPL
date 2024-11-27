@@ -1,6 +1,6 @@
 from pathlib import Path
 import re
-from exceptions_files.mepa_exceptions import MepaException
+from .mepa_exceptions import MepaException
 
 
 def reader(path:Path | None) -> str:
@@ -31,9 +31,8 @@ def verify_stack_address(code_file:dict[int:str]) -> None:
     for value in code_file.values():
         if value.__contains__("AMEM"):
             allocated_vars_size = int(value.split()[-1])
-            print(allocated_vars_size)
     
     for key, value in code_file.items():
         if value.__contains__("CRVL"):
             if int(value.split()[-1]) >= allocated_vars_size:
-                raise MepaException(f"Valor Inexistente <Linha {key} : {value}> No Endereço da Memória")
+                raise MepaException(f"Valor Inexistente <Linha {key+1} : {value}> No Endereço da Memória")
