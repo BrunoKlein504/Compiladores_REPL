@@ -2,9 +2,19 @@ from pathlib import Path
 from typing import Optional
 import math
 from dataclasses import dataclass
-from .functions import reader, labels_index, verify_indentifier, verify_stack_address
-from time import sleep
+from .functions import reader, labels_index, verify_indentifier, verify_stack_address, jump_to_index
 from .mepa_exceptions import MepaException
+
+"""
+Feito por Bruno Klein Gomes              - RA: 2201010
+      Gabriel Souza Morisco              - RA: 2201686
+      Luccas Delgado                     - RA: 2200535
+      Guilherme de Oliveira Torres       - RA: 2200412
+      Ricardo Mantia da Costa Castellani - RA: 2200292
+      Kauã Marcelino Duque               - RA: 2201177
+
+"""
+
 @dataclass
 class Mepa:
     file: Optional[str] = None
@@ -15,7 +25,6 @@ class Mepa:
     def LOAD(self, file: Optional[str] = None) -> None:
         path_root = Path(__file__).parents[1] / 'files'
 
-                #Verificar se há modificações antes de abrir outro arquivo
         if self.buffer:
             with open(self.buffer, "r+") as buffer:
                 buffer_lines = buffer.readlines()
@@ -26,6 +35,9 @@ class Mepa:
             if input_value.lower()[0] == 's':
                 self.SAVE()
 
+        if not file: # Enter
+            raise MepaException("Digite o Nome do Arquivo!")
+        
         if not file.endswith('.mepa'):
             raise MepaException("Arquivo Precisa Ser da Extensão <.mepa>")
 
@@ -42,7 +54,7 @@ class Mepa:
 
                 with open(buffer_path, 'w+') as buffer:
                     buffer.writelines(lines)
-            print("Arquivo carregado com sucesso!")
+            print(f"Arquivo '{file}' Carregado Com Sucesso!")
         else:
             raise MepaException("O arquivo não existe.")
         
@@ -88,15 +100,13 @@ class Mepa:
             verify_stack_address(self.file_lines)
 
 
-            # print(labels)
-            # print(self.file_lines)
             while self.file_lines[index] != "PARA":
                 index += 1
-                if self.file_lines[index].__contains__('amem'.upper()):
+                if self.file_lines[index].__contains__("AMEM"):
                     for i in range(int(self.file_lines[index].split()[-1])):
                         stack.append(0)
-                    # print(stack)
-                if self.file_lines[index].__contains__('dmem'.upper()):
+
+                elif self.file_lines[index].__contains__("DMEM"):
                     dmem_range = int(self.file_lines[index].split()[-1])
                     for i in range(dmem_range):
                         stack.pop()
@@ -216,17 +226,16 @@ class Mepa:
                 elif self.file_lines[index].startswith("DVSF"):
                     label = self.file_lines[index].split()[1]
                     if not p:
-                        index = self.jump_to_index(label, index, labels)
+                        index = jump_to_index(label, index, labels)
                 
                 elif self.file_lines[index].startswith("DSVS"):
                     label = self.file_lines[index].split()[1]
-                    index = self.jump_to_index(label, index, labels)
+                    index = jump_to_index(label, index, labels)
                 
                 elif self.file_lines[index].startswith("IMPR"):
                     print(f"\t{stack[-1]}")
                     stack.pop()
 
-            # self.runable = True
         else:
             raise MepaException("Leia um arquivo existente!")
 
@@ -253,7 +262,6 @@ class Mepa:
                     lines.append('\n' + instruction.upper())
                     print("Linha adicionada!")
 
-                # self.buffer = ''.join(lines)
                 file.writelines(lines)
 
         else:
@@ -268,7 +276,6 @@ class Mepa:
                     buffer.seek(0,0)
                     buffer.truncate()
                     if start > 0 and start <= len(lines) and end > start  and end <= len(lines):
-                        # del lines[start-1:end]
                         deleted_lines = lines[start-1:end]
                         del lines[start-1:end]
                         print(f"Linhas <{start}> à <{end}> Deletadas!")
@@ -277,8 +284,6 @@ class Mepa:
 
                         lines[-1] = lines[-1].replace('\n', '')
                         buffer.writelines(lines)
-                        # buffer.truncate()
-                        # print(f'Linhas <{start}, {end}> Removidas Com Sucesso!')
                     else:
                         print("Linha Inexistente!")
                         return
@@ -309,16 +314,12 @@ class Mepa:
                 with open(str(self.file), 'w') as file:
                     file.writelines(lines)
                     print('Arquivo Salvo!')
-
-            # # Deleting the buffer
-            # Path(self.buffer).unlink()
         else:
             raise MepaException("Não Há arquivos para salvar!")
 
 ############################ DEBUG SECTION ###############################
 
     def DEBUG(self):
-            # global buffer
             global stack, index, p
 
             stack = []
@@ -332,11 +333,8 @@ class Mepa:
 
             while True:
                 match input("Insere um Comando:\n(Debugging Mode)\n\t>").upper():
-                # match "NEXT":
                     case 'NEXT':
                         self.NEXT()
-                        # self.STACK()
-                        # sleep(0.5)
                         if self.file_lines[index] == "PARA":
                             print("Finalizando o Debug")
                             return
@@ -360,12 +358,12 @@ class Mepa:
         index += 1
 
         if self.file_lines[index].__contains__('amem'.upper()):
-            for i in range(int(self.file_lines[index].split()[-1])):
+            for _ in range(int(self.file_lines[index].split()[-1])):
                 stack.append(0)
-            # print(stack)
+
         if self.file_lines[index].__contains__('dmem'.upper()):
             dmem_range = int(self.file_lines[index].split()[-1])
-            for i in range(dmem_range):
+            for _ in range(dmem_range):
                 stack.pop()
 
         elif self.file_lines[index].__contains__('crct'.upper()):
@@ -483,11 +481,11 @@ class Mepa:
         elif self.file_lines[index].startswith("DVSF"):
             label = self.file_lines[index].split()[1]
             if not p:
-                index = self.jump_to_index(label, index, labels)
+                index = jump_to_index(label, index, labels)
         
         elif self.file_lines[index].startswith("DSVS"):
             label = self.file_lines[index].split()[1]
-            index = self.jump_to_index(label, index, labels)
+            index = jump_to_index(label, index, labels)
         
         elif self.file_lines[index].startswith("IMPR"):
             print(f"\t{stack[-1]}")
@@ -495,13 +493,6 @@ class Mepa:
 
 
         print(f'{self.file_lines[index]:*^30}')
-
-    def jump_to_index(self, label:str, index: int, labels:dict[str:int]) -> int:
-        for key, item in labels.items():
-            if label == key:
-                index = item
-        return index
-
     def STOP(self):
         print("Depuração Encerrada!")
 
@@ -523,7 +514,7 @@ class Mepa:
                         input_value = input("Há Modificações Não Salvas. Deseja Salvar? (sim/não)\n\t")
             if input_value.lower()[0] == 's':
                 self.SAVE()
-                    # Deleting the buffer
+            # Deleting the buffer
             Path(self.buffer).unlink()
         print("Finalizando o Programa.")
             

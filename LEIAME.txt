@@ -1,0 +1,10 @@
+OTÁVIO MIRANDA. Structural Pattern Matching no Python (Match/Case, mais que Swtich/Case). Disponível em: <https://www.youtube.com/watch?v=2f_5LRQV3k0>. Acesso em: 28 nov. 2024.
+pathlib — Object-oriented filesystem paths — Python 3.9.4 documentation. Disponível em: <https://docs.python.org/3/library/pathlib.html>.
+Python File Methods. Disponível em: <https://www.w3schools.com/python/python_ref_file.asp>.
+FLYBYWIRE. Difference between modes a, a+, w, w+, and r+ in built-in open function? Disponível em: <https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function>.
+6. Modules — Python 3.8.0 documentation. Disponível em: <https://docs.python.org/3/tutorial/modules.html>.
+dataclasses — Data Classes. Disponível em: <https://docs.python.org/pt-br/3/library/dataclasses.html>. Acesso em: 28 nov. 2024.
+PYTHON. re — Regular expression operations — Python 3.7.2 documentation. Disponível em: <https://docs.python.org/3/library/re.html>.
+SOMEGUY. Open file for reading and writing with truncate. Disponível em: <https://stackoverflow.com/questions/33466635/open-file-for-reading-and-writing-with-truncate>.
+W3SCHOOLS. Python - Global Variables. Disponível em: <https://www.w3schools.com/python/python_variables_global.asp>.
+Funções recursivas com Python - Otávio Miranda. Disponível em: <https://www.otaviomiranda.com.br/2020/funcoes-recursivas-com-python/>. Acesso em: 28 nov. 2024.
